@@ -2,11 +2,7 @@
 #ifndef _LIB_UBSAN_H
 #define _LIB_UBSAN_H
 
-enum {
-	type_kind_int = 0,
-	type_kind_float = 1,
-	type_unknown = 0xffff
-};
+enum { type_kind_int = 0, type_kind_float = 1, type_unknown = 0xffff };
 
 struct type_descriptor {
 	u16 type_kind;
@@ -56,6 +52,12 @@ struct type_mismatch_data_common {
 	struct type_descriptor *type;
 	unsigned long alignment;
 	unsigned char type_check_kind;
+};
+
+struct nonnull_arg_data {
+	struct source_location location;
+	struct source_location attr_location;
+	int arg_index;
 };
 
 struct vla_bound_data {
