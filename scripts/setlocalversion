@@ -61,6 +61,9 @@ _scm_version() {
 		if git config --get svn-remote.svn.url >/dev/null; then
 			printf -- '-svn%s' "$(git svn find-rev $head)"
 		fi
+
+		# All done with git
+		return
 	fi
 
 	# Check for mercurial and a mercurial repo.
