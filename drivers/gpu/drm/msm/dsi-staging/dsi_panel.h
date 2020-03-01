@@ -532,6 +532,10 @@ int dsi_panel_get_vendor_extinfo(struct dsi_panel *panel);
 /* Set/get high brightness mode */
 int dsi_panel_update_hbm(struct dsi_panel *panel, enum hbm_mode_type);
 enum hbm_mode_type dsi_panel_get_hbm(struct dsi_panel *panel);
+#ifdef CONFIG_UCI
+// special try locking version...
+int dsi_panel_try_update_hbm(struct dsi_panel *panel, enum hbm_mode_type);
+#endif
 
 int dsi_panel_bl_update_irc(struct dsi_backlight_config *bl, bool enable);
 
