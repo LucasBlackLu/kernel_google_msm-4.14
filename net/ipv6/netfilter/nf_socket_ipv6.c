@@ -22,15 +22,11 @@
 #include <net/netfilter/nf_conntrack.h>
 #endif
 
-static int
-extract_icmp6_fields(const struct sk_buff *skb,
-		     unsigned int outside_hdrlen,
-		     int *protocol,
-		     const struct in6_addr **raddr,
-		     const struct in6_addr **laddr,
-		     __be16 *rport,
-		     __be16 *lport,
-		     struct ipv6hdr *ipv6_var)
+static int extract_icmp6_fields(const struct sk_buff *skb,
+				unsigned int outside_hdrlen, int *protocol,
+				const struct in6_addr **raddr,
+				const struct in6_addr **laddr, __be16 *rport,
+				__be16 *lport, struct ipv6hdr *ipv6_var)
 {
 	const struct ipv6hdr *inside_iph;
 	struct icmp6hdr *icmph, _icmph;
@@ -39,8 +35,8 @@ extract_icmp6_fields(const struct sk_buff *skb,
 	__be16 inside_fragoff;
 	int inside_hdrlen;
 
-	icmph = skb_header_pointer(skb, outside_hdrlen,
-				   sizeof(_icmph), &_icmph);
+	icmph = skb_header_pointer(skb, outside_hdrlen, sizeof(_icmph),
+				   &_icmph);
 	if (icmph == NULL)
 		return 1;
 
@@ -53,18 +49,16 @@ extract_icmp6_fields(const struct sk_buff *skb,
 		return 1;
 	inside_nexthdr = inside_iph->nexthdr;
 
-	inside_hdrlen = ipv6_skip_exthdr(skb, outside_hdrlen + sizeof(_icmph) +
-					      sizeof(*ipv6_var),
-					 &inside_nexthdr, &inside_fragoff);
+	inside_hdrlen = ipv6_skip_exthdr(
+		skb, outside_hdrlen + sizeof(_icmph) + sizeof(*ipv6_var),
+		&inside_nexthdr, &inside_fragoff);
 	if (inside_hdrlen < 0)
 		return 1; /* hjm: Packet has no/incomplete transport layer headers. */
 
-	if (inside_nexthdr != IPPROTO_TCP &&
-	    inside_nexthdr != IPPROTO_UDP)
+	if (inside_nexthdr != IPPROTO_TCP && inside_nexthdr != IPPROTO_UDP)
 		return 1;
 
-	ports = skb_header_pointer(skb, inside_hdrlen,
-				   sizeof(_ports), &_ports);
+	ports = skb_header_pointer(skb, inside_hdrlen, sizeof(_ports), &_ports);
 	if (ports == NULL)
 		return 1;
 
@@ -80,17 +74,15 @@ extract_icmp6_fields(const struct sk_buff *skb,
 }
 
 static struct sock *
-nf_socket_get_sock_v6(struct net *net, struct sk_buff *skb, int doff,
-		      const u8 protocol,
-		      const struct in6_addr *saddr, const struct in6_addr *daddr,
-		      const __be16 sport, const __be16 dport,
-		      const struct net_device *in)
+	nf_socket_get_sock_v6(struct net *net, struct sk_buff *skb, int doff,
+			      const u8 protocol, const struct in6_addr *saddr,
+			      const struct in6_addr *daddr, const __be16 sport,
+			      const __be16 dport, const struct net_device *in)
 {
 	switch (protocol) {
 	case IPPROTO_TCP:
-		return inet6_lookup(net, &tcp_hashinfo, skb, doff,
-				    saddr, sport, daddr, dport,
-				    in->ifindex);
+		return inet6_lookup(net, &tcp_hashinfo, skb, doff, saddr, sport,
+				    daddr, dport, in->ifindex);
 	case IPPROTO_UDP:
 		return udp6_lib_lookup(net, saddr, sport, daddr, dport,
 				       in->ifindex);
@@ -103,7 +95,7 @@ struct sock *nf_sk_lookup_slow_v6(struct net *net, const struct sk_buff *skb,
 				  const struct net_device *indev)
 {
 	struct sock *sk = skb->sk;
-	__be16 uninitialized_var(dport), uninitialized_var(sport);
+	__be16 dport, sport;
 	const struct in6_addr *daddr = NULL, *saddr = NULL;
 	struct ipv6hdr *iph = ipv6_hdr(skb), ipv6_var;
 	struct sk_buff *data_skb = NULL;
@@ -112,7 +104,8 @@ struct sock *nf_sk_lookup_slow_v6(struct net *net, const struct sk_buff *skb,
 
 	tproto = ipv6_find_hdr(skb, &thoff, -1, NULL, NULL);
 	if (tproto < 0) {
-		pr_debug("unable to find transport header in IPv6 packet, dropping\n");
+		pr_debug(
+			"unable to find transport header in IPv6 packet, dropping\n");
 		return NULL;
 	}
 
@@ -120,8 +113,10 @@ struct sock *nf_sk_lookup_slow_v6(struct net *net, const struct sk_buff *skb,
 		struct tcphdr _hdr;
 		struct udphdr *hp;
 
-		hp = skb_header_pointer(skb, thoff, tproto == IPPROTO_UDP ?
-					sizeof(*hp) : sizeof(_hdr), &_hdr);
+		hp = skb_header_pointer(skb, thoff,
+					tproto == IPPROTO_UDP ? sizeof(*hp) :
+								sizeof(_hdr),
+					&_hdr);
 		if (hp == NULL)
 			return NULL;
 
@@ -131,8 +126,8 @@ struct sock *nf_sk_lookup_slow_v6(struct net *net, const struct sk_buff *skb,
 		dport = hp->dest;
 		data_skb = (struct sk_buff *)skb;
 		doff = tproto == IPPROTO_TCP ?
-			thoff + __tcp_hdrlen((struct tcphdr *)hp) :
-			thoff + sizeof(*hp);
+			       thoff + __tcp_hdrlen((struct tcphdr *)hp) :
+			       thoff + sizeof(*hp);
 
 	} else if (tproto == IPPROTO_ICMPV6) {
 		if (extract_icmp6_fields(skb, thoff, &tproto, &saddr, &daddr,

@@ -20,18 +20,17 @@
 #include <net/netfilter/nf_conntrack.h>
 #endif
 
-static int
-extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
-		     __be32 *raddr, __be32 *laddr,
-		     __be16 *rport, __be16 *lport)
+static int extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
+				__be32 *raddr, __be32 *laddr, __be16 *rport,
+				__be16 *lport)
 {
 	unsigned int outside_hdrlen = ip_hdrlen(skb);
 	struct iphdr *inside_iph, _inside_iph;
 	struct icmphdr *icmph, _icmph;
 	__be16 *ports, _ports[2];
 
-	icmph = skb_header_pointer(skb, outside_hdrlen,
-				   sizeof(_icmph), &_icmph);
+	icmph = skb_header_pointer(skb, outside_hdrlen, sizeof(_icmph),
+				   &_icmph);
 	if (icmph == NULL)
 		return 1;
 
@@ -46,9 +45,9 @@ extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
 		return 1;
 	}
 
-	inside_iph = skb_header_pointer(skb, outside_hdrlen +
-					sizeof(struct icmphdr),
-					sizeof(_inside_iph), &_inside_iph);
+	inside_iph =
+		skb_header_pointer(skb, outside_hdrlen + sizeof(struct icmphdr),
+				   sizeof(_inside_iph), &_inside_iph);
 	if (inside_iph == NULL)
 		return 1;
 
@@ -56,9 +55,9 @@ extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
 	    inside_iph->protocol != IPPROTO_UDP)
 		return 1;
 
-	ports = skb_header_pointer(skb, outside_hdrlen +
-				   sizeof(struct icmphdr) +
-				   (inside_iph->ihl << 2),
+	ports = skb_header_pointer(skb,
+				   outside_hdrlen + sizeof(struct icmphdr) +
+					   (inside_iph->ihl << 2),
 				   sizeof(_ports), &_ports);
 	if (ports == NULL)
 		return 1;
@@ -74,18 +73,15 @@ extract_icmp4_fields(const struct sk_buff *skb, u8 *protocol,
 	return 0;
 }
 
-static struct sock *
-nf_socket_get_sock_v4(struct net *net, struct sk_buff *skb, const int doff,
-		      const u8 protocol,
-		      const __be32 saddr, const __be32 daddr,
-		      const __be16 sport, const __be16 dport,
-		      const struct net_device *in)
+static struct sock *nf_socket_get_sock_v4(
+	struct net *net, struct sk_buff *skb, const int doff, const u8 protocol,
+	const __be32 saddr, const __be32 daddr, const __be16 sport,
+	const __be16 dport, const struct net_device *in)
 {
 	switch (protocol) {
 	case IPPROTO_TCP:
-		return inet_lookup(net, &tcp_hashinfo, skb, doff,
-				   saddr, sport, daddr, dport,
-				   in->ifindex);
+		return inet_lookup(net, &tcp_hashinfo, skb, doff, saddr, sport,
+				   daddr, dport, in->ifindex);
 	case IPPROTO_UDP:
 		return udp4_lib_lookup(net, saddr, sport, daddr, dport,
 				       in->ifindex);
@@ -96,12 +92,12 @@ nf_socket_get_sock_v4(struct net *net, struct sk_buff *skb, const int doff,
 struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
 				  const struct net_device *indev)
 {
-	__be32 uninitialized_var(daddr), uninitialized_var(saddr);
-	__be16 uninitialized_var(dport), uninitialized_var(sport);
+	__be32 daddr, saddr;
+	__be16 dport, sport;
 	const struct iphdr *iph = ip_hdr(skb);
 	struct sk_buff *data_skb = NULL;
 	struct sock *sk = skb->sk;
-	u8 uninitialized_var(protocol);
+	u8 protocol;
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
 	enum ip_conntrack_info ctinfo;
 	struct nf_conn const *ct;
@@ -114,7 +110,9 @@ struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
 
 		hp = skb_header_pointer(skb, ip_hdrlen(skb),
 					iph->protocol == IPPROTO_UDP ?
-					sizeof(*hp) : sizeof(_hdr), &_hdr);
+						sizeof(*hp) :
+						sizeof(_hdr),
+					&_hdr);
 		if (hp == NULL)
 			return NULL;
 
@@ -125,12 +123,13 @@ struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
 		dport = hp->dest;
 		data_skb = (struct sk_buff *)skb;
 		doff = iph->protocol == IPPROTO_TCP ?
-			ip_hdrlen(skb) + __tcp_hdrlen((struct tcphdr *)hp) :
-			ip_hdrlen(skb) + sizeof(*hp);
+			       ip_hdrlen(skb) +
+				       __tcp_hdrlen((struct tcphdr *)hp) :
+			       ip_hdrlen(skb) + sizeof(*hp);
 
 	} else if (iph->protocol == IPPROTO_ICMP) {
-		if (extract_icmp4_fields(skb, &protocol, &saddr, &daddr,
-					 &sport, &dport))
+		if (extract_icmp4_fields(skb, &protocol, &saddr, &daddr, &sport,
+					 &dport))
 			return NULL;
 	} else {
 		return NULL;
@@ -145,14 +144,14 @@ struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
 	if (ct &&
 	    ((iph->protocol != IPPROTO_ICMP &&
 	      ctinfo == IP_CT_ESTABLISHED_REPLY) ||
-	     (iph->protocol == IPPROTO_ICMP &&
-	      ctinfo == IP_CT_RELATED_REPLY)) &&
+	     (iph->protocol == IPPROTO_ICMP && ctinfo == IP_CT_RELATED_REPLY)) &&
 	    (ct->status & IPS_SRC_NAT_DONE)) {
-
 		daddr = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u3.ip;
 		dport = (iph->protocol == IPPROTO_TCP) ?
-			ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u.tcp.port :
-			ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.u.udp.port;
+				ct->tuplehash[IP_CT_DIR_ORIGINAL]
+					.tuple.src.u.tcp.port :
+				ct->tuplehash[IP_CT_DIR_ORIGINAL]
+					.tuple.src.u.udp.port;
 	}
 #endif
 
@@ -160,8 +159,8 @@ struct sock *nf_sk_lookup_slow_v4(struct net *net, const struct sk_buff *skb,
 		refcount_inc(&sk->sk_refcnt);
 	else
 		sk = nf_socket_get_sock_v4(dev_net(skb->dev), data_skb, doff,
-					   protocol, saddr, daddr, sport,
-					   dport, indev);
+					   protocol, saddr, daddr, sport, dport,
+					   indev);
 
 	return sk;
 }
