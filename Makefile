@@ -722,7 +722,7 @@ ARCH_CFLAGS :=
 include arch/$(SRCARCH)/Makefile
 
 GC_FLAGS += -O3 -mcpu=cortex-a76.cortex-a55+crypto+crc
-CL_FLAGS += -O3 -mcpu=cortex-a55+crypto+crc
+CL_FLAGS += -O3 -mcpu=cortex-a76+crypto+crc
 
 export GC_FLAGS
 export CL_FLAGS
