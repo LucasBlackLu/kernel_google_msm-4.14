@@ -64,9 +64,9 @@ struct ahash_request {
 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
 };
 
-#define AHASH_REQUEST_ON_STACK(name, ahash) \
-	char __##name##_desc[sizeof(struct ahash_request) + \
-		crypto_ahash_reqsize(ahash)] CRYPTO_MINALIGN_ATTR; \
+#define AHASH_REQUEST_ON_STACK(name, ahash)                                     \
+	char __##name##_desc[sizeof(struct ahash_request) +                     \
+			     crypto_ahash_reqsize(ahash)] CRYPTO_MINALIGN_ATTR; \
 	struct ahash_request *name = (void *)__##name##_desc
 
 /**
@@ -147,9 +147,15 @@ struct shash_desc {
 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
 };
 
-#define SHASH_DESC_ON_STACK(shash, ctx)				  \
-	char __##shash##_desc[sizeof(struct shash_desc) +	  \
-		crypto_shash_descsize(ctx)] CRYPTO_MINALIGN_ATTR; \
+/*
+ * Worst case is hmac(sha3-224-generic).  Its context is a nested 'shash_desc'
+ * containing a 'struct sha3_state'.
+ */
+#define HASH_MAX_DESCSIZE (sizeof(struct shash_desc) + 360)
+
+#define SHASH_DESC_ON_STACK(shash, ctx)                                         \
+	char __##shash##_desc[sizeof(struct shash_desc) +                       \
+			      crypto_shash_descsize(ctx)] CRYPTO_MINALIGN_ATTR; \
 	struct shash_desc *shash = (struct shash_desc *)__##shash##_desc
 
 /**
@@ -174,10 +180,10 @@ struct shash_alg {
 	int (*update)(struct shash_desc *desc, const u8 *data,
 		      unsigned int len);
 	int (*final)(struct shash_desc *desc, u8 *out);
-	int (*finup)(struct shash_desc *desc, const u8 *data,
-		     unsigned int len, u8 *out);
-	int (*digest)(struct shash_desc *desc, const u8 *data,
-		      unsigned int len, u8 *out);
+	int (*finup)(struct shash_desc *desc, const u8 *data, unsigned int len,
+		     u8 *out);
+	int (*digest)(struct shash_desc *desc, const u8 *data, unsigned int len,
+		      u8 *out);
 	int (*export)(struct shash_desc *desc, void *out);
 	int (*import)(struct shash_desc *desc, const void *in);
 	int (*setkey)(struct crypto_shash *tfm, const u8 *key,
@@ -187,7 +193,7 @@ struct shash_alg {
 
 	/* These fields must match hash_alg_common. */
 	unsigned int digestsize
-		__attribute__ ((aligned(__alignof__(struct hash_alg_common))));
+		__attribute__((aligned(__alignof__(struct hash_alg_common))));
 	unsigned int statesize;
 
 	struct crypto_alg base;
@@ -283,8 +289,7 @@ static inline const char *crypto_ahash_driver_name(struct crypto_ahash *tfm)
 	return crypto_tfm_alg_driver_name(crypto_ahash_tfm(tfm));
 }
 
-static inline unsigned int crypto_ahash_alignmask(
-	struct crypto_ahash *tfm)
+static inline unsigned int crypto_ahash_alignmask(struct crypto_ahash *tfm)
 {
 	return crypto_tfm_alg_alignmask(crypto_ahash_tfm(tfm));
 }
@@ -303,14 +308,14 @@ static inline unsigned int crypto_ahash_blocksize(struct crypto_ahash *tfm)
 	return crypto_tfm_alg_blocksize(crypto_ahash_tfm(tfm));
 }
 
-static inline struct hash_alg_common *__crypto_hash_alg_common(
-	struct crypto_alg *alg)
+static inline struct hash_alg_common *
+	__crypto_hash_alg_common(struct crypto_alg *alg)
 {
 	return container_of(alg, struct hash_alg_common, base);
 }
 
-static inline struct hash_alg_common *crypto_hash_alg_common(
-	struct crypto_ahash *tfm)
+static inline struct hash_alg_common *
+	crypto_hash_alg_common(struct crypto_ahash *tfm)
 {
 	return __crypto_hash_alg_common(crypto_ahash_tfm(tfm)->__crt_alg);
 }
@@ -370,8 +375,8 @@ static inline void crypto_ahash_clear_flags(struct crypto_ahash *tfm, u32 flags)
  *
  * Return: ahash cipher handle
  */
-static inline struct crypto_ahash *crypto_ahash_reqtfm(
-	struct ahash_request *req)
+static inline struct crypto_ahash *
+	crypto_ahash_reqtfm(struct ahash_request *req)
 {
 	return __crypto_ahash_cast(req->base.tfm);
 }
@@ -561,13 +566,13 @@ static inline void ahash_request_set_tfm(struct ahash_request *req,
  *
  * Return: allocated request handle in case of success, or NULL if out of memory
  */
-static inline struct ahash_request *ahash_request_alloc(
-	struct crypto_ahash *tfm, gfp_t gfp)
+static inline struct ahash_request *
+	ahash_request_alloc(struct crypto_ahash *tfm, gfp_t gfp)
 {
 	struct ahash_request *req;
 
-	req = kmalloc(sizeof(struct ahash_request) +
-		      crypto_ahash_reqsize(tfm), gfp);
+	req = kmalloc(sizeof(struct ahash_request) + crypto_ahash_reqsize(tfm),
+		      gfp);
 
 	if (likely(req))
 		ahash_request_set_tfm(req, tfm);
@@ -586,12 +591,12 @@ static inline void ahash_request_free(struct ahash_request *req)
 
 static inline void ahash_request_zero(struct ahash_request *req)
 {
-	memzero_explicit(req, sizeof(*req) +
-			      crypto_ahash_reqsize(crypto_ahash_reqtfm(req)));
+	memzero_explicit(req, sizeof(*req) + crypto_ahash_reqsize(
+						     crypto_ahash_reqtfm(req)));
 }
 
-static inline struct ahash_request *ahash_request_cast(
-	struct crypto_async_request *req)
+static inline struct ahash_request *
+	ahash_request_cast(struct crypto_async_request *req)
 {
 	return container_of(req, struct ahash_request, base);
 }
@@ -626,7 +631,7 @@ static inline void ahash_request_set_callback(struct ahash_request *req,
 					      crypto_completion_t compl,
 					      void *data)
 {
-	req->base.complete = compl;
+	req->base.complete = compl ;
 	req->base.data = data;
 	req->base.flags = flags;
 }
@@ -709,8 +714,7 @@ static inline const char *crypto_shash_driver_name(struct crypto_shash *tfm)
 	return crypto_tfm_alg_driver_name(crypto_shash_tfm(tfm));
 }
 
-static inline unsigned int crypto_shash_alignmask(
-	struct crypto_shash *tfm)
+static inline unsigned int crypto_shash_alignmask(struct crypto_shash *tfm)
 {
 	return crypto_tfm_alg_alignmask(crypto_shash_tfm(tfm));
 }
@@ -940,4 +944,4 @@ static inline void shash_desc_zero(struct shash_desc *desc)
 			 sizeof(*desc) + crypto_shash_descsize(desc->tfm));
 }
 
-#endif	/* _CRYPTO_HASH_H */
+#endif /* _CRYPTO_HASH_H */
