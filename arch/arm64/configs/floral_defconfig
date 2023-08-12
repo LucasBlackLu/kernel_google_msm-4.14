@@ -46,6 +46,8 @@ CONFIG_DEFAULT_TCP_CONG="cubic"
 #
 # Kernel Tweaks
 #
+CONFIG_SIMPLE_GPU_ALGORITHM=y
+
 #
 # Floral General Configs
 #
