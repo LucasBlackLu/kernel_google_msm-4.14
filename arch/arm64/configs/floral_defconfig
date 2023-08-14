@@ -47,6 +47,7 @@ CONFIG_DEFAULT_TCP_CONG="cubic"
 # Kernel Tweaks
 #
 CONFIG_SIMPLE_GPU_ALGORITHM=y
+CONFIG_ADRENO_IDLER=y
 
 #
 # Floral General Configs
