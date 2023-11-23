@@ -757,6 +757,10 @@ KBUILD_AFLAGS   += $(GC_FLAGS)
 KBUILD_LDFLAGS  += $(GC_FLAGS)
 endif
 ifeq ($(cc-name),clang)
+#Enable MLGO for register allocation.
+KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+#Enable hot cold split optimization
+KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
 KBUILD_CFLAGS	+= $(CL_FLAGS)
 KBUILD_AFLAGS   += $(CL_FLAGS)
 KBUILD_LDFLAGS  += $(CL_FLAGS)
@@ -846,6 +850,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 
 ifeq ($(ld-name),lld)
 LDFLAGS += --lto-O3 --strip-debug
+LDFLAGS += -mllvm -regalloc-enable-advisor=release
 endif
 
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
