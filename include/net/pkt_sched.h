@@ -8,21 +8,21 @@
 #include <net/sch_generic.h>
 #include <uapi/linux/pkt_sched.h>
 
-#define DEFAULT_TX_QUEUE_LEN	1000
+#define DEFAULT_TX_QUEUE_LEN 1000
 
 struct qdisc_walker {
-	int	stop;
-	int	skip;
-	int	count;
-	int	(*fn)(struct Qdisc *, unsigned long cl, struct qdisc_walker *);
+	int stop;
+	int skip;
+	int count;
+	int (*fn)(struct Qdisc *, unsigned long cl, struct qdisc_walker *);
 };
 
-#define QDISC_ALIGNTO		64
-#define QDISC_ALIGN(len)	(((len) + QDISC_ALIGNTO-1) & ~(QDISC_ALIGNTO-1))
+#define QDISC_ALIGNTO 64
+#define QDISC_ALIGN(len) (((len) + QDISC_ALIGNTO - 1) & ~(QDISC_ALIGNTO - 1))
 
 static inline void *qdisc_priv(struct Qdisc *q)
 {
-	return (char *) q + QDISC_ALIGN(sizeof(struct Qdisc));
+	return (char *)q + QDISC_ALIGN(sizeof(struct Qdisc));
 }
 
 /* 
@@ -42,32 +42,33 @@ static inline void *qdisc_priv(struct Qdisc *q)
    in the most critical places.
  */
 
-typedef u64	psched_time_t;
-typedef long	psched_tdiff_t;
+typedef u64 psched_time_t;
+typedef long psched_tdiff_t;
 
 /* Avoid doing 64 bit divide */
-#define PSCHED_SHIFT			6
-#define PSCHED_TICKS2NS(x)		((s64)(x) << PSCHED_SHIFT)
-#define PSCHED_NS2TICKS(x)		((x) >> PSCHED_SHIFT)
+#define PSCHED_SHIFT 6
+#define PSCHED_TICKS2NS(x) ((s64)(x) << PSCHED_SHIFT)
+#define PSCHED_NS2TICKS(x) ((x) >> PSCHED_SHIFT)
 
-#define PSCHED_TICKS_PER_SEC		PSCHED_NS2TICKS(NSEC_PER_SEC)
-#define PSCHED_PASTPERFECT		0
+#define PSCHED_TICKS_PER_SEC PSCHED_NS2TICKS(NSEC_PER_SEC)
+#define PSCHED_PASTPERFECT 0
 
 static inline psched_time_t psched_get_time(void)
 {
 	return PSCHED_NS2TICKS(ktime_get_ns());
 }
 
-static inline psched_tdiff_t
-psched_tdiff_bounded(psched_time_t tv1, psched_time_t tv2, psched_time_t bound)
+static inline psched_tdiff_t psched_tdiff_bounded(psched_time_t tv1,
+						  psched_time_t tv2,
+						  psched_time_t bound)
 {
 	return min(tv1 - tv2, bound);
 }
 
 struct qdisc_watchdog {
-	u64		last_expires;
-	struct hrtimer	timer;
-	struct Qdisc	*qdisc;
+	u64 last_expires;
+	struct hrtimer timer;
+	struct Qdisc *qdisc;
 };
 
 void qdisc_watchdog_init(struct qdisc_watchdog *wd, struct Qdisc *qdisc);
@@ -126,8 +127,6 @@ static inline __be16 tc_skb_protocol(const struct sk_buff *skb)
 	return skb->protocol;
 }
 
-extern int tc_qdisc_flow_control(struct net_device *dev, u32 tcm_handle,
-				  int flow_enable);
 extern const struct nla_policy rtm_tca_policy[TCA_MAX + 1];
 
 /* Calculate maximal size of packet seen by hard_start_xmit

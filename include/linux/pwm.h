@@ -205,8 +205,8 @@ static inline enum pwm_polarity pwm_get_polarity(const struct pwm_device *pwm)
 	return state.polarity;
 }
 
-static inline enum pwm_output_type pwm_get_output_type(
-		const struct pwm_device *pwm)
+static inline enum pwm_output_type
+	pwm_get_output_type(const struct pwm_device *pwm)
 {
 	struct pwm_state state;
 
@@ -215,8 +215,8 @@ static inline enum pwm_output_type pwm_get_output_type(
 	return state.output_type;
 }
 
-static inline struct pwm_output_pattern *pwm_get_output_pattern(
-				struct pwm_device *pwm)
+static inline struct pwm_output_pattern *
+	pwm_get_output_pattern(struct pwm_device *pwm)
 {
 	struct pwm_state state;
 
@@ -278,7 +278,8 @@ static inline void pwm_init_state(const struct pwm_device *pwm,
  * duty = pwm_get_relative_duty_cycle(&state, 100);
  */
 static inline unsigned int
-pwm_get_relative_duty_cycle(const struct pwm_state *state, unsigned int scale)
+	pwm_get_relative_duty_cycle(const struct pwm_state *state,
+				    unsigned int scale)
 {
 	if (!state->period)
 		return 0;
@@ -305,16 +306,15 @@ pwm_get_relative_duty_cycle(const struct pwm_state *state, unsigned int scale)
  * This functions returns -EINVAL if @duty_cycle and/or @scale are
  * inconsistent (@scale == 0 or @duty_cycle > @scale).
  */
-static inline int
-pwm_set_relative_duty_cycle(struct pwm_state *state, unsigned int duty_cycle,
-			    unsigned int scale)
+static inline int pwm_set_relative_duty_cycle(struct pwm_state *state,
+					      unsigned int duty_cycle,
+					      unsigned int scale)
 {
 	if (!scale || duty_cycle > scale)
 		return -EINVAL;
 
-	state->duty_cycle = DIV_ROUND_CLOSEST_ULL((u64)duty_cycle *
-						  state->period,
-						  scale);
+	state->duty_cycle =
+		DIV_ROUND_CLOSEST_ULL((u64)duty_cycle * state->period, scale);
 
 	return 0;
 }
@@ -349,7 +349,7 @@ struct pwm_ops {
 	int (*config)(struct pwm_chip *chip, struct pwm_device *pwm,
 		      int duty_ns, int period_ns);
 	int (*config_extend)(struct pwm_chip *chip, struct pwm_device *pwm,
-		      u64 duty_ns, u64 period_ns);
+			     u64 duty_ns, u64 period_ns);
 	int (*set_polarity)(struct pwm_chip *chip, struct pwm_device *pwm,
 			    enum pwm_polarity polarity);
 	int (*capture)(struct pwm_chip *chip, struct pwm_device *pwm,
@@ -357,12 +357,11 @@ struct pwm_ops {
 	int (*enable)(struct pwm_chip *chip, struct pwm_device *pwm);
 	void (*disable)(struct pwm_chip *chip, struct pwm_device *pwm);
 	int (*get_output_type_supported)(struct pwm_chip *chip,
-			struct pwm_device *pwm);
+					 struct pwm_device *pwm);
 	int (*set_output_type)(struct pwm_chip *chip, struct pwm_device *pwm,
-			enum pwm_output_type output_type);
-	int (*set_output_pattern)(struct pwm_chip *chip,
-			struct pwm_device *pwm,
-			struct pwm_output_pattern *output_pattern);
+			       enum pwm_output_type output_type);
+	int (*set_output_pattern)(struct pwm_chip *chip, struct pwm_device *pwm,
+				  struct pwm_output_pattern *output_pattern);
 	int (*apply)(struct pwm_chip *chip, struct pwm_device *pwm,
 		     struct pwm_state *state);
 	void (*get_state)(struct pwm_chip *chip, struct pwm_device *pwm,
@@ -393,8 +392,8 @@ struct pwm_chip {
 
 	struct pwm_device *pwms;
 
-	struct pwm_device * (*of_xlate)(struct pwm_chip *pc,
-					const struct of_phandle_args *args);
+	struct pwm_device *(*of_xlate)(struct pwm_chip *pc,
+				       const struct of_phandle_args *args);
 	unsigned int of_pwm_n_cells;
 };
 
@@ -424,8 +423,8 @@ int pwm_adjust_config(struct pwm_device *pwm);
 static inline int pwm_get_output_type_supported(struct pwm_device *pwm)
 {
 	if (pwm->chip->ops->get_output_type_supported != NULL)
-		return pwm->chip->ops->
-			get_output_type_supported(pwm->chip, pwm);
+		return pwm->chip->ops->get_output_type_supported(pwm->chip,
+								 pwm);
 	else
 		return PWM_OUTPUT_FIXED;
 }
@@ -438,8 +437,7 @@ static inline int pwm_get_output_type_supported(struct pwm_device *pwm)
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-static inline int pwm_config(struct pwm_device *pwm, int duty_ns,
-			     int period_ns)
+static inline int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 {
 	struct pwm_state state;
 
@@ -467,7 +465,7 @@ static inline int pwm_config(struct pwm_device *pwm, int duty_ns,
  * Returns: 0 on success or a negative error code on failure.
  */
 static inline int pwm_config_extend(struct pwm_device *pwm, u64 duty_ns,
-			     u64 period_ns)
+				    u64 period_ns)
 {
 	struct pwm_state state;
 
@@ -570,11 +568,10 @@ int pwmchip_add_with_polarity(struct pwm_chip *chip,
 int pwmchip_add(struct pwm_chip *chip);
 int pwmchip_remove(struct pwm_chip *chip);
 struct pwm_device *pwm_request_from_chip(struct pwm_chip *chip,
-					 unsigned int index,
-					 const char *label);
+					 unsigned int index, const char *label);
 
 struct pwm_device *of_pwm_xlate_with_flags(struct pwm_chip *pc,
-		const struct of_phandle_args *args);
+					   const struct of_phandle_args *args);
 
 struct pwm_device *pwm_get(struct device *dev, const char *con_id);
 struct pwm_device *of_pwm_get(struct device_node *np, const char *con_id);
@@ -605,15 +602,13 @@ static inline int pwm_adjust_config(struct pwm_device *pwm)
 	return -ENOTSUPP;
 }
 
-static inline int pwm_config(struct pwm_device *pwm, int duty_ns,
-			     int period_ns)
+static inline int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 {
 	return -EINVAL;
 }
 
 static inline int pwm_capture(struct pwm_device *pwm,
-			      struct pwm_capture *result,
-			      unsigned long timeout)
+			      struct pwm_capture *result, unsigned long timeout)
 {
 	return -EINVAL;
 }
@@ -701,7 +696,7 @@ static inline void devm_pwm_put(struct device *dev, struct pwm_device *pwm)
 
 static inline void pwm_apply_args(struct pwm_device *pwm)
 {
-	struct pwm_state state = { };
+	struct pwm_state state = {};
 
 	/*
 	 * PWM users calling pwm_apply_args() expect to have a fresh config
@@ -742,20 +737,16 @@ struct pwm_lookup {
 	const char *module; /* optional, may be NULL */
 };
 
-#define PWM_LOOKUP_WITH_MODULE(_provider, _index, _dev_id, _con_id,	\
-			       _period, _polarity, _module)		\
-	{								\
-		.provider = _provider,					\
-		.index = _index,					\
-		.dev_id = _dev_id,					\
-		.con_id = _con_id,					\
-		.period = _period,					\
-		.polarity = _polarity,					\
-		.module = _module,					\
+#define PWM_LOOKUP_WITH_MODULE(_provider, _index, _dev_id, _con_id, _period,   \
+			       _polarity, _module)                             \
+	{                                                                      \
+		.provider = _provider, .index = _index, .dev_id = _dev_id,     \
+		.con_id = _con_id, .period = _period, .polarity = _polarity,   \
+		.module = _module,                                             \
 	}
 
-#define PWM_LOOKUP(_provider, _index, _dev_id, _con_id, _period, _polarity) \
-	PWM_LOOKUP_WITH_MODULE(_provider, _index, _dev_id, _con_id, _period, \
+#define PWM_LOOKUP(_provider, _index, _dev_id, _con_id, _period, _polarity)    \
+	PWM_LOOKUP_WITH_MODULE(_provider, _index, _dev_id, _con_id, _period,   \
 			       _polarity, NULL)
 
 #if IS_ENABLED(CONFIG_PWM)

@@ -42,8 +42,8 @@
 
 static unsigned long kasan_flags;
 
-#define KASAN_BIT_REPORTED	0
-#define KASAN_BIT_MULTI_SHOT	1
+#define KASAN_BIT_REPORTED 0
+#define KASAN_BIT_MULTI_SHOT 1
 
 bool kasan_save_enable_multi_shot(void)
 {
@@ -67,11 +67,10 @@ __setup("kasan_multi_shot", kasan_set_multi_shot);
 
 static void print_error_description(struct kasan_access_info *info)
 {
-	pr_err("BUG: KASAN: %s in %pS\n",
-		get_bug_type(info), (void *)info->ip);
+	pr_err("BUG: KASAN: %s in %pS\n", get_bug_type(info), (void *)info->ip);
 	pr_err("%s of size %zu at addr %px by task %s/%d\n",
-		info->is_write ? "Write" : "Read", info->access_size,
-		info->access_addr, current->comm, task_pid_nr(current));
+	       info->is_write ? "Write" : "Read", info->access_size,
+	       info->access_addr, current->comm, task_pid_nr(current));
 }
 
 static DEFINE_SPINLOCK(report_lock);
@@ -112,14 +111,13 @@ static void print_track(struct kasan_track *track, const char *prefix)
 
 static struct page *addr_to_page(const void *addr)
 {
-	if ((addr >= (void *)PAGE_OFFSET) &&
-			(addr < high_memory))
+	if ((addr >= (void *)PAGE_OFFSET) && (addr < high_memory))
 		return virt_to_head_page(addr);
 	return NULL;
 }
 
 static void describe_object_addr(struct kmem_cache *cache, void *object,
-				const void *addr)
+				 const void *addr)
 {
 	unsigned long access_addr = (unsigned long)addr;
 	unsigned long object_addr = (unsigned long)object;
@@ -128,7 +126,7 @@ static void describe_object_addr(struct kmem_cache *cache, void *object,
 
 	pr_err("The buggy address belongs to the object at %px\n"
 	       " which belongs to the cache %s of size %d\n",
-		object, cache->name, cache->object_size);
+	       object, cache->name, cache->object_size);
 
 	if (!addr)
 		return;
@@ -146,12 +144,12 @@ static void describe_object_addr(struct kmem_cache *cache, void *object,
 
 	pr_err("The buggy address is located %d bytes %s of\n"
 	       " %d-byte region [%px, %px)\n",
-		rel_bytes, rel_type, cache->object_size, (void *)object_addr,
-		(void *)(object_addr + cache->object_size));
+	       rel_bytes, rel_type, cache->object_size, (void *)object_addr,
+	       (void *)(object_addr + cache->object_size));
 }
 
 static void describe_object(struct kmem_cache *cache, void *object,
-				const void *addr)
+			    const void *addr)
 {
 	struct kasan_alloc_meta *alloc_info = get_alloc_info(cache, object);
 
@@ -177,8 +175,8 @@ static inline bool kernel_or_module_addr(const void *addr)
 static inline bool init_task_stack_addr(const void *addr)
 {
 	return addr >= (void *)&init_thread_union.stack &&
-		(addr <= (void *)&init_thread_union.stack +
-			sizeof(init_thread_union.stack));
+	       (addr <= (void *)&init_thread_union.stack +
+				sizeof(init_thread_union.stack));
 }
 
 static void print_address_description(void *addr)
@@ -190,7 +188,7 @@ static void print_address_description(void *addr)
 
 	if (page && PageSlab(page)) {
 		struct kmem_cache *cache = page->slab_cache;
-		void *object = nearest_obj(cache, page,	addr);
+		void *object = nearest_obj(cache, page, addr);
 
 		describe_object(cache, object, addr);
 	}
@@ -216,8 +214,8 @@ static int shadow_pointer_offset(const void *row, const void *shadow)
 	/* The length of ">ff00ff00ff00ff00: " is
 	 *    3 + (BITS_PER_LONG/8)*2 chars.
 	 */
-	return 3 + (BITS_PER_LONG/8)*2 + (shadow - row)*2 +
-		(shadow - row) / SHADOW_BYTES_PER_BLOCK + 1;
+	return 3 + (BITS_PER_LONG / 8) * 2 + (shadow - row) * 2 +
+	       (shadow - row) / SHADOW_BYTES_PER_BLOCK + 1;
 }
 
 static void print_shadow_for_address(const void *addr)
@@ -227,32 +225,31 @@ static void print_shadow_for_address(const void *addr)
 	const void *shadow_row;
 
 	shadow_row = (void *)round_down((unsigned long)shadow,
-					SHADOW_BYTES_PER_ROW)
-		- SHADOW_ROWS_AROUND_ADDR * SHADOW_BYTES_PER_ROW;
+					SHADOW_BYTES_PER_ROW) -
+		     SHADOW_ROWS_AROUND_ADDR * SHADOW_BYTES_PER_ROW;
 
 	pr_err("Memory state around the buggy address:\n");
 
 	for (i = -SHADOW_ROWS_AROUND_ADDR; i <= SHADOW_ROWS_AROUND_ADDR; i++) {
 		const void *kaddr = kasan_shadow_to_mem(shadow_row);
-		char buffer[4 + (BITS_PER_LONG/8)*2];
+		char buffer[4 + (BITS_PER_LONG / 8) * 2];
 		char shadow_buf[SHADOW_BYTES_PER_ROW];
 
 		snprintf(buffer, sizeof(buffer),
-			(i == 0) ? ">%px: " : " %px: ", kaddr);
+			 (i == 0) ? ">%px: " : " %px: ", kaddr);
 		/*
 		 * We should not pass a shadow pointer to generic
 		 * function, because generic functions may try to
 		 * access kasan mapping for the passed address.
 		 */
 		memcpy(shadow_buf, shadow_row, SHADOW_BYTES_PER_ROW);
-		print_hex_dump(KERN_ERR, buffer,
-			DUMP_PREFIX_NONE, SHADOW_BYTES_PER_ROW, 1,
-			shadow_buf, SHADOW_BYTES_PER_ROW, 0);
+		print_hex_dump(KERN_ERR, buffer, DUMP_PREFIX_NONE,
+			       SHADOW_BYTES_PER_ROW, 1, shadow_buf,
+			       SHADOW_BYTES_PER_ROW, 0);
 
 		if (row_is_guilty(shadow_row, shadow))
 			pr_err("%*c\n",
-				shadow_pointer_offset(shadow_row, shadow),
-				'^');
+			       shadow_pointer_offset(shadow_row, shadow), '^');
 
 		shadow_row += SHADOW_BYTES_PER_ROW;
 	}
@@ -282,7 +279,8 @@ void kasan_report_invalid_free(void *object, unsigned long ip)
 	end_report(&flags);
 }
 
-void __kasan_report(unsigned long addr, size_t size, bool is_write, unsigned long ip)
+void __kasan_report(unsigned long addr, size_t size, bool is_write,
+		    unsigned long ip)
 {
 	struct kasan_access_info info;
 	void *tagged_addr;
