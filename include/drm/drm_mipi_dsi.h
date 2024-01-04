@@ -18,11 +18,11 @@ struct mipi_dsi_host;
 struct mipi_dsi_device;
 
 /* request ACK from peripheral */
-#define MIPI_DSI_MSG_REQ_ACK	BIT(0)
+#define MIPI_DSI_MSG_REQ_ACK BIT(0)
 /* use Low Power Mode to transmit message */
-#define MIPI_DSI_MSG_USE_LPM	BIT(1)
+#define MIPI_DSI_MSG_USE_LPM BIT(1)
 /* read mipi_dsi_msg.ctrl and unicast to only that ctrls */
-#define MIPI_DSI_MSG_UNICAST	BIT(2)
+#define MIPI_DSI_MSG_UNICAST BIT(2)
 /* Stack all commands until lastcommand bit and trigger all in one go */
 #define MIPI_DSI_MSG_LASTCOMMAND BIT(3)
 
@@ -92,10 +92,8 @@ int mipi_dsi_create_packet(struct mipi_dsi_packet *packet,
  * contained in the transmit buffer on success.
  */
 struct mipi_dsi_host_ops {
-	int (*attach)(struct mipi_dsi_host *host,
-		      struct mipi_dsi_device *dsi);
-	int (*detach)(struct mipi_dsi_host *host,
-		      struct mipi_dsi_device *dsi);
+	int (*attach)(struct mipi_dsi_host *host, struct mipi_dsi_device *dsi);
+	int (*detach)(struct mipi_dsi_host *host, struct mipi_dsi_device *dsi);
 	ssize_t (*transfer)(struct mipi_dsi_host *host,
 			    const struct mipi_dsi_msg *msg);
 };
@@ -119,33 +117,33 @@ struct mipi_dsi_host *of_find_mipi_dsi_host_by_node(struct device_node *node);
 /* DSI mode flags */
 
 /* video mode */
-#define MIPI_DSI_MODE_VIDEO		BIT(0)
+#define MIPI_DSI_MODE_VIDEO BIT(0)
 /* video burst mode */
-#define MIPI_DSI_MODE_VIDEO_BURST	BIT(1)
+#define MIPI_DSI_MODE_VIDEO_BURST BIT(1)
 /* video pulse mode */
-#define MIPI_DSI_MODE_VIDEO_SYNC_PULSE	BIT(2)
+#define MIPI_DSI_MODE_VIDEO_SYNC_PULSE BIT(2)
 /* enable auto vertical count mode */
-#define MIPI_DSI_MODE_VIDEO_AUTO_VERT	BIT(3)
+#define MIPI_DSI_MODE_VIDEO_AUTO_VERT BIT(3)
 /* enable hsync-end packets in vsync-pulse and v-porch area */
-#define MIPI_DSI_MODE_VIDEO_HSE		BIT(4)
+#define MIPI_DSI_MODE_VIDEO_HSE BIT(4)
 /* disable hfront-porch area */
-#define MIPI_DSI_MODE_VIDEO_HFP		BIT(5)
+#define MIPI_DSI_MODE_VIDEO_HFP BIT(5)
 /* disable hback-porch area */
-#define MIPI_DSI_MODE_VIDEO_HBP		BIT(6)
+#define MIPI_DSI_MODE_VIDEO_HBP BIT(6)
 /* disable hsync-active area */
-#define MIPI_DSI_MODE_VIDEO_HSA		BIT(7)
+#define MIPI_DSI_MODE_VIDEO_HSA BIT(7)
 /* flush display FIFO on vsync pulse */
-#define MIPI_DSI_MODE_VSYNC_FLUSH	BIT(8)
+#define MIPI_DSI_MODE_VSYNC_FLUSH BIT(8)
 /* disable EoT packets in HS mode */
-#define MIPI_DSI_MODE_EOT_PACKET	BIT(9)
+#define MIPI_DSI_MODE_EOT_PACKET BIT(9)
 /* device supports non-continuous clock behavior (DSI spec 5.6.1) */
-#define MIPI_DSI_CLOCK_NON_CONTINUOUS	BIT(10)
+#define MIPI_DSI_CLOCK_NON_CONTINUOUS BIT(10)
 /* transmit data in low power */
-#define MIPI_DSI_MODE_LPM		BIT(11)
+#define MIPI_DSI_MODE_LPM BIT(11)
 /* disable BLLP area */
-#define MIPI_DSI_MODE_VIDEO_BLLP	BIT(12)
+#define MIPI_DSI_MODE_VIDEO_BLLP BIT(12)
 /* disable EOF BLLP area */
-#define MIPI_DSI_MODE_VIDEO_EOF_BLLP	BIT(13)
+#define MIPI_DSI_MODE_VIDEO_EOF_BLLP BIT(13)
 
 enum mipi_dsi_pixel_format {
 	MIPI_DSI_FMT_RGB888,
@@ -154,7 +152,7 @@ enum mipi_dsi_pixel_format {
 	MIPI_DSI_FMT_RGB565,
 };
 
-#define DSI_DEV_NAME_SIZE		20
+#define DSI_DEV_NAME_SIZE 20
 
 /**
  * struct mipi_dsi_device_info - template for creating a mipi_dsi_device
@@ -225,8 +223,8 @@ static inline int mipi_dsi_pixel_format_to_bpp(enum mipi_dsi_pixel_format fmt)
 }
 
 struct mipi_dsi_device *
-mipi_dsi_device_register_full(struct mipi_dsi_host *host,
-			      const struct mipi_dsi_device_info *info);
+	mipi_dsi_device_register_full(struct mipi_dsi_host *host,
+				      const struct mipi_dsi_device_info *info);
 void mipi_dsi_device_unregister(struct mipi_dsi_device *dsi);
 struct mipi_dsi_device *of_find_mipi_dsi_device_by_node(struct device_node *np);
 int mipi_dsi_attach(struct mipi_dsi_device *dsi);
@@ -254,13 +252,13 @@ enum mipi_dsi_dcs_tear_mode {
 };
 
 #define MIPI_DSI_DCS_POWER_MODE_DISPLAY (1 << 2)
-#define MIPI_DSI_DCS_POWER_MODE_NORMAL  (1 << 3)
-#define MIPI_DSI_DCS_POWER_MODE_SLEEP   (1 << 4)
+#define MIPI_DSI_DCS_POWER_MODE_NORMAL (1 << 3)
+#define MIPI_DSI_DCS_POWER_MODE_SLEEP (1 << 4)
 #define MIPI_DSI_DCS_POWER_MODE_PARTIAL (1 << 5)
-#define MIPI_DSI_DCS_POWER_MODE_IDLE    (1 << 6)
+#define MIPI_DSI_DCS_POWER_MODE_IDLE (1 << 6)
 
-ssize_t mipi_dsi_dcs_write_buffer(struct mipi_dsi_device *dsi,
-				  const void *data, size_t len);
+ssize_t mipi_dsi_dcs_write_buffer(struct mipi_dsi_device *dsi, const void *data,
+				  size_t len);
 ssize_t mipi_dsi_dcs_write(struct mipi_dsi_device *dsi, u8 cmd,
 			   const void *data, size_t len);
 ssize_t mipi_dsi_dcs_read(struct mipi_dsi_device *dsi, u8 cmd, void *data,
@@ -287,9 +285,9 @@ int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
 int mipi_dsi_dcs_get_display_brightness(struct mipi_dsi_device *dsi,
 					u16 *brightness, size_t num_params);
 int mipi_dsi_dcs_set_display_brightness_large(struct mipi_dsi_device *dsi,
-					     u16 brightness);
+					      u16 brightness);
 int mipi_dsi_dcs_get_display_brightness_large(struct mipi_dsi_device *dsi,
-					     u16 *brightness);
+					      u16 *brightness);
 
 /**
  * struct mipi_dsi_driver - DSI driver
@@ -300,13 +298,13 @@ int mipi_dsi_dcs_get_display_brightness_large(struct mipi_dsi_device *dsi,
  */
 struct mipi_dsi_driver {
 	struct device_driver driver;
-	int(*probe)(struct mipi_dsi_device *dsi);
-	int(*remove)(struct mipi_dsi_device *dsi);
+	int (*probe)(struct mipi_dsi_device *dsi);
+	int (*remove)(struct mipi_dsi_device *dsi);
 	void (*shutdown)(struct mipi_dsi_device *dsi);
 };
 
 static inline struct mipi_dsi_driver *
-to_mipi_dsi_driver(struct device_driver *driver)
+	to_mipi_dsi_driver(struct device_driver *driver)
 {
 	return container_of(driver, struct mipi_dsi_driver, driver);
 }
@@ -325,11 +323,11 @@ int mipi_dsi_driver_register_full(struct mipi_dsi_driver *driver,
 				  struct module *owner);
 void mipi_dsi_driver_unregister(struct mipi_dsi_driver *driver);
 
-#define mipi_dsi_driver_register(driver) \
+#define mipi_dsi_driver_register(driver)                                       \
 	mipi_dsi_driver_register_full(driver, THIS_MODULE)
 
-#define module_mipi_dsi_driver(__mipi_dsi_driver) \
-	module_driver(__mipi_dsi_driver, mipi_dsi_driver_register, \
-			mipi_dsi_driver_unregister)
+#define module_mipi_dsi_driver(__mipi_dsi_driver)                              \
+	module_driver(__mipi_dsi_driver, mipi_dsi_driver_register,             \
+		      mipi_dsi_driver_unregister)
 
 #endif /* __DRM_MIPI_DSI__ */

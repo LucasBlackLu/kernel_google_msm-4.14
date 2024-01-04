@@ -57,10 +57,6 @@ static u32 stmmac_config_sub_second_increment(void __iomem *ioaddr,
 	if (!(value & PTP_TCR_TSCTRLSSR))
 		ss_inc = div_u64((ss_inc * 1000), 465);
 
-	ss_inc &= PTP_SSIR_SSINC_MASK;
-	sns_inc &= PTP_SSIR_SNSINC_MASK;
-
-	reg_value = ss_inc;
 	if (data > PTP_SSIR_SSINC_MAX)
 		data = PTP_SSIR_SSINC_MAX;
 
@@ -82,7 +78,7 @@ static int stmmac_init_systime(void __iomem *ioaddr, u32 sec, u32 nsec)
 	/* wait for previous(if any) time initialization to complete. */
 	limit = PTP_LIMIT;
 	while (limit--) {
-		if (!(readl_relaxed(ioaddr + PTP_TCR) &  PTP_TCR_TSINIT))
+		if (!(readl_relaxed(ioaddr + PTP_TCR) & PTP_TCR_TSINIT))
 			break;
 		usleep_range(1000, 1500);
 	}

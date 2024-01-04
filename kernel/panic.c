@@ -64,13 +64,13 @@ EXPORT_SYMBOL(panic_notifier_list);
 #ifdef CONFIG_SYSCTL
 static struct ctl_table kern_panic_table[] = {
 	{
-		.procname       = "warn_limit",
-		.data           = &warn_limit,
-		.maxlen         = sizeof(warn_limit),
-		.mode           = 0644,
-		.proc_handler   = proc_douintvec,
+		.procname = "warn_limit",
+		.data = &warn_limit,
+		.maxlen = sizeof(warn_limit),
+		.mode = 0644,
+		.proc_handler = proc_douintvec,
 	},
-	{ }
+	{}
 };
 
 static __init int kernel_panic_sysctls_init(void)
@@ -84,8 +84,8 @@ late_initcall(kernel_panic_sysctls_init);
 static atomic_t warn_count = ATOMIC_INIT(0);
 
 #ifdef CONFIG_SYSFS
-static ssize_t warn_count_show(struct kobject *kobj, struct kobj_attribute *attr,
-			       char *page)
+static ssize_t warn_count_show(struct kobject *kobj,
+			       struct kobj_attribute *attr, char *page)
 {
 	return sysfs_emit(page, "%d\n", atomic_read(&warn_count));
 }
@@ -240,7 +240,7 @@ void panic(const char *fmt, ...)
 	 * panic_cpu to this CPU.  In this case, this is also the 1st CPU.
 	 */
 	this_cpu = raw_smp_processor_id();
-	old_cpu  = atomic_cmpxchg(&panic_cpu, PANIC_CPU_INVALID, this_cpu);
+	old_cpu = atomic_cmpxchg(&panic_cpu, PANIC_CPU_INVALID, this_cpu);
 
 	if (old_cpu != PANIC_CPU_INVALID && old_cpu != this_cpu)
 		panic_smp_self_stop();
@@ -371,7 +371,7 @@ void panic(const char *fmt, ...)
 #endif
 	pr_emerg("---[ end Kernel panic - not syncing: %s\n", buf);
 	local_irq_enable();
-	for (i = 0; ; i += PANIC_TIMER_STEP) {
+	for (i = 0;; i += PANIC_TIMER_STEP) {
 		touch_softlockup_watchdog();
 		if (i >= i_next) {
 			i += panic_blink(state ^= 1);
@@ -388,22 +388,22 @@ EXPORT_SYMBOL(panic);
  * is being removed anyway.
  */
 const struct taint_flag taint_flags[TAINT_FLAGS_COUNT] = {
-	{ 'P', 'G', true },	/* TAINT_PROPRIETARY_MODULE */
-	{ 'F', ' ', true },	/* TAINT_FORCED_MODULE */
-	{ 'S', ' ', false },	/* TAINT_CPU_OUT_OF_SPEC */
-	{ 'R', ' ', false },	/* TAINT_FORCED_RMMOD */
-	{ 'M', ' ', false },	/* TAINT_MACHINE_CHECK */
-	{ 'B', ' ', false },	/* TAINT_BAD_PAGE */
-	{ 'U', ' ', false },	/* TAINT_USER */
-	{ 'D', ' ', false },	/* TAINT_DIE */
-	{ 'A', ' ', false },	/* TAINT_OVERRIDDEN_ACPI_TABLE */
-	{ 'W', ' ', false },	/* TAINT_WARN */
-	{ 'C', ' ', true },	/* TAINT_CRAP */
-	{ 'I', ' ', false },	/* TAINT_FIRMWARE_WORKAROUND */
-	{ 'O', ' ', true },	/* TAINT_OOT_MODULE */
-	{ 'E', ' ', true },	/* TAINT_UNSIGNED_MODULE */
-	{ 'L', ' ', false },	/* TAINT_SOFTLOCKUP */
-	{ 'K', ' ', true },	/* TAINT_LIVEPATCH */
+	{ 'P', 'G', true }, /* TAINT_PROPRIETARY_MODULE */
+	{ 'F', ' ', true }, /* TAINT_FORCED_MODULE */
+	{ 'S', ' ', false }, /* TAINT_CPU_OUT_OF_SPEC */
+	{ 'R', ' ', false }, /* TAINT_FORCED_RMMOD */
+	{ 'M', ' ', false }, /* TAINT_MACHINE_CHECK */
+	{ 'B', ' ', false }, /* TAINT_BAD_PAGE */
+	{ 'U', ' ', false }, /* TAINT_USER */
+	{ 'D', ' ', false }, /* TAINT_DIE */
+	{ 'A', ' ', false }, /* TAINT_OVERRIDDEN_ACPI_TABLE */
+	{ 'W', ' ', false }, /* TAINT_WARN */
+	{ 'C', ' ', true }, /* TAINT_CRAP */
+	{ 'I', ' ', false }, /* TAINT_FIRMWARE_WORKAROUND */
+	{ 'O', ' ', true }, /* TAINT_OOT_MODULE */
+	{ 'E', ' ', true }, /* TAINT_UNSIGNED_MODULE */
+	{ 'L', ' ', false }, /* TAINT_SOFTLOCKUP */
+	{ 'K', ' ', true }, /* TAINT_LIVEPATCH */
 };
 
 /**
@@ -439,8 +439,8 @@ const char *print_tainted(void)
 		s = buf + sprintf(buf, "Tainted: ");
 		for (i = 0; i < TAINT_FLAGS_COUNT; i++) {
 			const struct taint_flag *t = &taint_flags[i];
-			*s++ = test_bit(i, &tainted_mask) ?
-					t->c_true : t->c_false;
+			*s++ = test_bit(i, &tainted_mask) ? t->c_true :
+							    t->c_false;
 		}
 		*s = 0;
 	} else
@@ -641,8 +641,8 @@ void warn_slowpath_fmt(const char *file, int line, const char *fmt, ...)
 }
 EXPORT_SYMBOL(warn_slowpath_fmt);
 
-void warn_slowpath_fmt_taint(const char *file, int line,
-			     unsigned taint, const char *fmt, ...)
+void warn_slowpath_fmt_taint(const char *file, int line, unsigned taint,
+			     const char *fmt, ...)
 {
 	struct warn_args args;
 
@@ -669,7 +669,7 @@ EXPORT_SYMBOL(warn_slowpath_null);
 __visible void __stack_chk_fail(void)
 {
 	panic("stack-protector: Kernel stack is corrupted in: %pB\n",
-		__builtin_return_address(0));
+	      __builtin_return_address(0));
 }
 EXPORT_SYMBOL(__stack_chk_fail);
 
@@ -679,10 +679,10 @@ EXPORT_SYMBOL(__stack_chk_fail);
 void refcount_error_report(struct pt_regs *regs, const char *err)
 {
 	WARN_RATELIMIT(1, "refcount_t %s at %pB in %s[%d], uid/euid: %u/%u\n",
-		err, (void *)instruction_pointer(regs),
-		current->comm, task_pid_nr(current),
-		from_kuid_munged(&init_user_ns, current_uid()),
-		from_kuid_munged(&init_user_ns, current_euid()));
+		       err, (void *)instruction_pointer(regs), current->comm,
+		       task_pid_nr(current),
+		       from_kuid_munged(&init_user_ns, current_uid()),
+		       from_kuid_munged(&init_user_ns, current_euid()));
 }
 #endif
 

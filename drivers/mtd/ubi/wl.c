@@ -128,7 +128,7 @@
  * does not pick eraseblocks with erase counter greater than the lowest erase
  * counter plus %WL_FREE_MAX_DIFF.
  */
-#define WL_FREE_MAX_DIFF (2*UBI_WL_THRESHOLD)
+#define WL_FREE_MAX_DIFF (2 * UBI_WL_THRESHOLD)
 
 /*
  * Maximum number of consecutive background thread failures which is enough to
@@ -335,8 +335,8 @@ static struct ubi_wl_entry *find_wl_entry(struct ubi_device *ubi,
 	/* If no fastmap has been written and this WL entry can be used
 	 * as anchor PEB, hold it back and return the second best WL entry
 	 * such that fastmap can use the anchor PEB later. */
-	if (prev_e && !ubi->fm_disabled &&
-	    !ubi->fm && e->pnum < UBI_FM_MAX_START)
+	if (prev_e && !ubi->fm_disabled && !ubi->fm &&
+	    e->pnum < UBI_FM_MAX_START)
 		return prev_e;
 
 	return e;
@@ -367,7 +367,7 @@ static struct ubi_wl_entry *find_mean_wl_entry(struct ubi_device *ubi,
 		 * WL entry such that fastmap can use the anchor PEB later. */
 		e = may_reserve_for_fm(ubi, e, root);
 	} else
-		e = find_wl_entry(ubi, root, WL_FREE_MAX_DIFF/2);
+		e = find_wl_entry(ubi, root, WL_FREE_MAX_DIFF / 2);
 
 	return e;
 }
@@ -544,9 +544,9 @@ static void serve_prot_queue(struct ubi_device *ubi)
 repeat:
 	count = 0;
 	spin_lock(&ubi->wl_lock);
-	list_for_each_entry_safe(e, tmp, &ubi->pq[ubi->pq_head], u.list) {
+	list_for_each_entry_safe (e, tmp, &ubi->pq[ubi->pq_head], u.list) {
 		dbg_wl("PEB %d EC %d protection over, move to used tree",
-			e->pnum, e->ec);
+		       e->pnum, e->ec);
 
 		list_del(&e->u.list);
 		wl_tree_add(e, &ubi->used);
@@ -623,8 +623,8 @@ static int schedule_erase(struct ubi_device *ubi, struct ubi_wl_entry *e,
 
 	ubi_assert(e);
 
-	dbg_wl("schedule erasure of PEB %d, EC %d, torture %d",
-	       e->pnum, e->ec, torture);
+	dbg_wl("schedule erasure of PEB %d, EC %d, torture %d", e->pnum, e->ec,
+	       torture);
 
 	wl_wrk = kmalloc(sizeof(struct ubi_work), GFP_NOFS);
 	if (!wl_wrk)
@@ -709,8 +709,7 @@ static int wear_leveling_worker(struct ubi_device *ubi, struct ubi_work *wrk,
 	ubi_assert(!ubi->move_from && !ubi->move_to);
 	ubi_assert(!ubi->move_to_put);
 
-	if (!ubi->free.rb_node ||
-	    (!ubi->used.rb_node && !ubi->scrub.rb_node)) {
+	if (!ubi->free.rb_node || (!ubi->used.rb_node && !ubi->scrub.rb_node)) {
 		/*
 		 * No free physical eraseblocks? Well, they must be waiting in
 		 * the queue to be erased. Cancel movement - it will be
@@ -767,8 +766,8 @@ static int wear_leveling_worker(struct ubi_device *ubi, struct ubi_work *wrk,
 		}
 		self_check_in_wl_tree(ubi, e1, &ubi->used);
 		rb_erase(&e1->u.rb, &ubi->used);
-		dbg_wl("move PEB %d EC %d to PEB %d EC %d",
-		       e1->pnum, e1->ec, e2->pnum, e2->ec);
+		dbg_wl("move PEB %d EC %d to PEB %d EC %d", e1->pnum, e1->ec,
+		       e2->pnum, e2->ec);
 	} else {
 		/* Perform scrubbing */
 		scrubbing = 1;
@@ -883,7 +882,8 @@ static int wear_leveling_worker(struct ubi_device *ubi, struct ubi_work *wrk,
 			 * UBI from trying to move it over and over again.
 			 */
 			if (ubi->erroneous_peb_count > ubi->max_erroneous) {
-				ubi_err(ubi, "too many erroneous eraseblocks (%d)",
+				ubi_err(ubi,
+					"too many erroneous eraseblocks (%d)",
 					ubi->erroneous_peb_count);
 				goto out_error;
 			}
@@ -939,8 +939,8 @@ static int wear_leveling_worker(struct ubi_device *ubi, struct ubi_work *wrk,
 		 * Well, the target PEB was put meanwhile, schedule it for
 		 * erasure.
 		 */
-		dbg_wl("PEB %d (LEB %d:%d) was put meanwhile, erase",
-		       e2->pnum, vol_id, lnum);
+		dbg_wl("PEB %d (LEB %d:%d) was put meanwhile, erase", e2->pnum,
+		       vol_id, lnum);
 		err = do_sync_erase(ubi, e2, vol_id, lnum, 0);
 		if (err)
 			goto out_ro;
@@ -961,8 +961,8 @@ out_not_moved:
 		dbg_wl("cancel moving PEB %d (LEB %d:%d) to PEB %d (%d)",
 		       e1->pnum, vol_id, lnum, e2->pnum, err);
 	else
-		dbg_wl("cancel moving PEB %d to PEB %d (%d)",
-		       e1->pnum, e2->pnum, err);
+		dbg_wl("cancel moving PEB %d to PEB %d (%d)", e1->pnum,
+		       e2->pnum, err);
 	spin_lock(&ubi->wl_lock);
 	if (protect)
 		prot_queue_add(ubi, e1);
@@ -1004,10 +1004,11 @@ out_not_moved:
 
 out_error:
 	if (vol_id != -1)
-		ubi_err(ubi, "error %d while moving PEB %d to PEB %d",
-			err, e1->pnum, e2->pnum);
+		ubi_err(ubi, "error %d while moving PEB %d to PEB %d", err,
+			e1->pnum, e2->pnum);
 	else
-		ubi_err(ubi, "error %d while moving PEB %d (LEB %d:%d) to PEB %d",
+		ubi_err(ubi,
+			"error %d while moving PEB %d (LEB %d:%d) to PEB %d",
 			err, e1->pnum, vol_id, lnum, e2->pnum);
 	spin_lock(&ubi->wl_lock);
 	ubi->move_from = ubi->move_to = NULL;
@@ -1124,8 +1125,8 @@ static int __erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk)
 	int lnum = wl_wrk->lnum;
 	int err, available_consumed = 0;
 
-	dbg_wl("erase PEB %d EC %d LEB %d:%d",
-	       pnum, e->ec, wl_wrk->vol_id, wl_wrk->lnum);
+	dbg_wl("erase PEB %d EC %d LEB %d:%d", pnum, e->ec, wl_wrk->vol_id,
+	       wl_wrk->lnum);
 
 	err = sync_erase(ubi, e, wl_wrk->torture);
 	if (!err) {
@@ -1185,7 +1186,8 @@ static int __erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk)
 	if (ubi->beb_rsvd_pebs == 0) {
 		if (ubi->avail_pebs == 0) {
 			spin_unlock(&ubi->volumes_lock);
-			ubi_err(ubi, "no reserved/available physical eraseblocks");
+			ubi_err(ubi,
+				"no reserved/available physical eraseblocks");
 			goto out_ro;
 		}
 		ubi->avail_pebs -= 1;
@@ -1214,10 +1216,10 @@ static int __erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk)
 	ubi->good_peb_count -= 1;
 	ubi_calculate_reserved(ubi);
 	if (available_consumed)
-		ubi_warn(ubi, "no PEBs in the reserved pool, used an available PEB");
+		ubi_warn(ubi,
+			 "no PEBs in the reserved pool, used an available PEB");
 	else if (ubi->beb_rsvd_pebs)
-		ubi_msg(ubi, "%d PEBs left in the reserve",
-			ubi->beb_rsvd_pebs);
+		ubi_msg(ubi, "%d PEBs left in the reserve", ubi->beb_rsvd_pebs);
 	else
 		ubi_warn(ubi, "last PEB from the reserve was used");
 	spin_unlock(&ubi->volumes_lock);
@@ -1235,7 +1237,7 @@ out_ro:
 }
 
 static int erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk,
-			  int shutdown)
+			int shutdown)
 {
 	int ret;
 
@@ -1266,8 +1268,8 @@ static int erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk,
  * occurred to this @pnum and it has to be tested. This function returns zero
  * in case of success, and a negative error code in case of failure.
  */
-int ubi_wl_put_peb(struct ubi_device *ubi, int vol_id, int lnum,
-		   int pnum, int torture)
+int ubi_wl_put_peb(struct ubi_device *ubi, int vol_id, int lnum, int pnum,
+		   int torture)
 {
 	int err;
 	struct ubi_wl_entry *e;
@@ -1281,7 +1283,6 @@ int ubi_wl_put_peb(struct ubi_device *ubi, int vol_id, int lnum,
 retry:
 	spin_lock(&ubi->wl_lock);
 	e = ubi->lookuptbl[pnum];
-	e->sqnum = UBI_UNKNOWN;
 	if (!e) {
 		/*
 		 * This wl entry has been removed for some errors by other
@@ -1395,7 +1396,7 @@ unsigned long long ubi_wl_scrub_get_min_sqnum(struct ubi_device *ubi)
 
 	/* Go through the pq list */
 	for (i = 0; i < UBI_PROT_QUEUE_LEN; ++i) {
-		list_for_each_entry_safe(e, tmp, &ubi->pq[i], u.list) {
+		list_for_each_entry_safe (e, tmp, &ubi->pq[i], u.list) {
 			if (e->sqnum < min_sqnum)
 				min_sqnum = e->sqnum;
 		}
@@ -1426,7 +1427,7 @@ unsigned long long ubi_wl_scrub_get_min_sqnum(struct ubi_device *ubi)
  *
  */
 void ubi_wl_update_peb_sqnum(struct ubi_device *ubi, int pnum,
-				struct ubi_vid_hdr *vid_hdr)
+			     struct ubi_vid_hdr *vid_hdr)
 {
 	struct ubi_wl_entry *e;
 
@@ -1475,7 +1476,8 @@ ssize_t ubi_wl_scrub_all(struct ubi_device *ubi, unsigned long long scrub_sqnum)
 	}
 
 	if (is_ubi_readonly(ubi)) {
-		ubi_err(ubi, "Cannot *Initiate* scrub:background thread disabled or readonly!");
+		ubi_err(ubi,
+			"Cannot *Initiate* scrub:background thread disabled or readonly!");
 		return -EROFS;
 	}
 
@@ -1518,8 +1520,7 @@ ssize_t ubi_wl_scrub_all(struct ubi_device *ubi, unsigned long long scrub_sqnum)
 
 	/* Move all protected pebs to scrub tree */
 	for (i = 0; i < UBI_PROT_QUEUE_LEN; ++i) {
-		list_for_each_entry_safe(e, tmp, &ubi->pq[i], u.list) {
-
+		list_for_each_entry_safe (e, tmp, &ubi->pq[i], u.list) {
 			if (e->sqnum > scrub_sqnum)
 				continue;
 
@@ -1553,7 +1554,8 @@ ssize_t ubi_wl_scrub_all(struct ubi_device *ubi, unsigned long long scrub_sqnum)
 		msleep(1000);
 
 		if (is_ubi_readonly(ubi)) {
-			ubi_err(ubi, "Cannot *Complete* scrub:background thread disabled or readonly!");
+			ubi_err(ubi,
+				"Cannot *Complete* scrub:background thread disabled or readonly!");
 			return -EROFS;
 		}
 		wake_up_process(ubi->bgt_thread);
@@ -1586,7 +1588,7 @@ retry:
 	spin_lock(&ubi->wl_lock);
 	e = ubi->lookuptbl[pnum];
 	if (e == ubi->move_from || in_wl_tree(e, &ubi->scrub) ||
-				   in_wl_tree(e, &ubi->erroneous)) {
+	    in_wl_tree(e, &ubi->erroneous)) {
 		spin_unlock(&ubi->wl_lock);
 		return 0;
 	}
@@ -1650,8 +1652,8 @@ int ubi_wl_flush(struct ubi_device *ubi, int vol_id, int lnum)
 	 * Erase while the pending works queue is not empty, but not more than
 	 * the number of currently pending works.
 	 */
-	dbg_wl("flush pending work for LEB %d:%d (%d pending works)",
-	       vol_id, lnum, ubi->works_count);
+	dbg_wl("flush pending work for LEB %d:%d (%d pending works)", vol_id,
+	       lnum, ubi->works_count);
 
 	while (found) {
 		struct ubi_work *wrk, *tmp;
@@ -1659,7 +1661,7 @@ int ubi_wl_flush(struct ubi_device *ubi, int vol_id, int lnum)
 
 		down_read(&ubi->work_sem);
 		spin_lock(&ubi->wl_lock);
-		list_for_each_entry_safe(wrk, tmp, &ubi->works, list) {
+		list_for_each_entry_safe (wrk, tmp, &ubi->works, list) {
 			if ((vol_id == UBI_ALL || wrk->vol_id == vol_id) &&
 			    (lnum == UBI_ALL || wrk->lnum == lnum)) {
 				list_del(&wrk->list);
@@ -1733,8 +1735,8 @@ int ubi_thread(void *u)
 	int failures = 0;
 	struct ubi_device *ubi = u;
 
-	ubi_msg(ubi, "background thread \"%s\" started, PID %d",
-		ubi->bgt_name, task_pid_nr(current));
+	ubi_msg(ubi, "background thread \"%s\" started, PID %d", ubi->bgt_name,
+		task_pid_nr(current));
 
 	set_freezable();
 	for (;;) {
@@ -1818,7 +1820,8 @@ static void shutdown_work(struct ubi_device *ubi)
  * @aeb: UBI attach info PEB
  * @sync: If true, erase synchronously. Otherwise schedule for erasure
  */
-static int erase_aeb(struct ubi_device *ubi, struct ubi_ainf_peb *aeb, bool sync)
+static int erase_aeb(struct ubi_device *ubi, struct ubi_ainf_peb *aeb,
+		     bool sync)
 {
 	struct ubi_wl_entry *e;
 	int err;
@@ -1887,7 +1890,7 @@ int ubi_wl_init(struct ubi_device *ubi, struct ubi_attach_info *ai)
 	ubi->pq_head = 0;
 
 	ubi->free_count = 0;
-	list_for_each_entry_safe(aeb, tmp, &ai->erase, u.list) {
+	list_for_each_entry_safe (aeb, tmp, &ai->erase, u.list) {
 		cond_resched();
 
 		err = erase_aeb(ubi, aeb, false);
@@ -1897,7 +1900,7 @@ int ubi_wl_init(struct ubi_device *ubi, struct ubi_attach_info *ai)
 		found_pebs++;
 	}
 
-	list_for_each_entry(aeb, &ai->free, u.list) {
+	list_for_each_entry (aeb, &ai->free, u.list) {
 		cond_resched();
 
 		e = kmem_cache_alloc(ubi_wl_entry_slab, GFP_KERNEL);
@@ -1920,8 +1923,10 @@ int ubi_wl_init(struct ubi_device *ubi, struct ubi_attach_info *ai)
 		found_pebs++;
 	}
 
-	ubi_rb_for_each_entry(rb1, av, &ai->volumes, rb) {
-		ubi_rb_for_each_entry(rb2, aeb, &av->root, u.rb) {
+	ubi_rb_for_each_entry(rb1, av, &ai->volumes, rb)
+	{
+		ubi_rb_for_each_entry(rb2, aeb, &av->root, u.rb)
+		{
 			cond_resched();
 
 			e = kmem_cache_alloc(ubi_wl_entry_slab, GFP_KERNEL);
@@ -1950,7 +1955,7 @@ int ubi_wl_init(struct ubi_device *ubi, struct ubi_attach_info *ai)
 		}
 	}
 
-	list_for_each_entry(aeb, &ai->fastmap, u.list) {
+	list_for_each_entry (aeb, &ai->fastmap, u.list) {
 		cond_resched();
 
 		e = ubi_find_fm_block(ubi, aeb->pnum);
@@ -2036,7 +2041,7 @@ static void protection_queue_destroy(struct ubi_device *ubi)
 	struct ubi_wl_entry *e, *tmp;
 
 	for (i = 0; i < UBI_PROT_QUEUE_LEN; ++i) {
-		list_for_each_entry_safe(e, tmp, &ubi->pq[i], u.list) {
+		list_for_each_entry_safe (e, tmp, &ubi->pq[i], u.list) {
 			list_del(&e->u.list);
 			wl_entry_destroy(ubi, e);
 		}
@@ -2146,7 +2151,7 @@ static int self_check_in_pq(const struct ubi_device *ubi,
 		return 0;
 
 	for (i = 0; i < UBI_PROT_QUEUE_LEN; ++i)
-		list_for_each_entry(p, &ubi->pq[i], u.list)
+		list_for_each_entry (p, &ubi->pq[i], u.list)
 			if (p == e)
 				return 0;
 
@@ -2228,7 +2233,6 @@ retry:
 		spin_unlock(&ubi->wl_lock);
 		up_read(&ubi->fm_eba_sem);
 		goto retry;
-
 	}
 	e = wl_get_wle(ubi);
 	prot_queue_add(ubi, e);
@@ -2237,7 +2241,8 @@ retry:
 	err = ubi_self_check_all_ff(ubi, e->pnum, ubi->vid_hdr_aloffset,
 				    ubi->peb_size - ubi->vid_hdr_aloffset);
 	if (err) {
-		ubi_err(ubi, "new PEB %d does not contain all 0xFF bytes", e->pnum);
+		ubi_err(ubi, "new PEB %d does not contain all 0xFF bytes",
+			e->pnum);
 		return err;
 	}
 

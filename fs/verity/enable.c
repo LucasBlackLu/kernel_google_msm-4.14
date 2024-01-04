@@ -10,7 +10,6 @@
 #include <crypto/hash.h>
 #include <linux/backing-dev.h>
 #include <linux/mount.h>
-#include <linux/pagemap.h>
 #include <linux/sched/signal.h>
 #include <linux/uaccess.h>
 
@@ -92,14 +91,16 @@ static int build_merkle_tree_level(struct file *filp, unsigned int level,
 				      inode->i_sb->s_bdi->io_pages);
 
 			/* Non-leaf: hashing hash block from level below */
-			src_page = vops->read_merkle_tree_page(inode,
-					params->level_start[level - 1] + i,
-					num_ra_pages);
+			src_page = vops->read_merkle_tree_page(
+				inode, params->level_start[level - 1] + i,
+				num_ra_pages);
 			if (IS_ERR(src_page)) {
 				err = PTR_ERR(src_page);
-				fsverity_err(inode,
-					     "Error %d reading Merkle tree page %llu",
-					     err, params->level_start[level - 1] + i);
+				fsverity_err(
+					inode,
+					"Error %d reading Merkle tree page %llu",
+					err,
+					params->level_start[level - 1] + i);
 				return err;
 			}
 		}
@@ -119,14 +120,14 @@ static int build_merkle_tree_level(struct file *filp, unsigned int level,
 			/* Flush the pending hash block */
 			memset(&pending_hashes[pending_size], 0,
 			       params->block_size - pending_size);
-			err = vops->write_merkle_tree_block(inode,
-					pending_hashes,
-					dst_block_num,
-					params->log_blocksize);
+			err = vops->write_merkle_tree_block(
+				inode, pending_hashes, dst_block_num,
+				params->log_blocksize);
 			if (err) {
-				fsverity_err(inode,
-					     "Error %d writing Merkle tree block %llu",
-					     err, dst_block_num);
+				fsverity_err(
+					inode,
+					"Error %d writing Merkle tree block %llu",
+					err, dst_block_num);
 				return err;
 			}
 			dst_block_num++;
@@ -200,7 +201,7 @@ static int enable_verity(struct file *filp,
 {
 	struct inode *inode = file_inode(filp);
 	const struct fsverity_operations *vops = inode->i_sb->s_vop;
-	struct merkle_tree_params params = { };
+	struct merkle_tree_params params = {};
 	struct fsverity_descriptor *desc;
 	size_t desc_size = sizeof(*desc) + arg->sig_size;
 	struct fsverity_info *vi;
@@ -237,8 +238,8 @@ static int enable_verity(struct file *filp,
 	/* Prepare the Merkle tree parameters */
 	err = fsverity_init_merkle_tree_params(&params, inode,
 					       arg->hash_algorithm,
-					       desc->log_blocksize,
-					       desc->salt, desc->salt_size);
+					       desc->log_blocksize, desc->salt,
+					       desc->salt_size);
 	if (err)
 		goto out;
 
@@ -288,8 +289,9 @@ static int enable_verity(struct file *filp,
 	}
 
 	if (arg->sig_size)
-		pr_debug("Storing a %u-byte PKCS#7 signature alongside the file\n",
-			 arg->sig_size);
+		pr_debug(
+			"Storing a %u-byte PKCS#7 signature alongside the file\n",
+			arg->sig_size);
 
 	/*
 	 * Tell the filesystem to finish enabling verity on the file.
@@ -391,25 +393,27 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
 		goto out_drop_write;
 
 	err = enable_verity(filp, &arg);
-	if (err)
-		goto out_allow_write_access;
 
 	/*
-	 * Some pages of the file may have been evicted from pagecache after
-	 * being used in the Merkle tree construction, then read into pagecache
-	 * again by another process reading from the file concurrently.  Since
-	 * these pages didn't undergo verification against the file digest which
-	 * fs-verity now claims to be enforcing, we have to wipe the pagecache
-	 * to ensure that all future reads are verified.
+	 * We no longer drop the inode's pagecache after enabling verity.  This
+	 * used to be done to try to avoid a race condition where pages could be
+	 * evicted after being used in the Merkle tree construction, then
+	 * re-instantiated by a concurrent read.  Such pages are unverified, and
+	 * the backing storage could have filled them with different content, so
+	 * they shouldn't be used to fulfill reads once verity is enabled.
+	 *
+	 * But, dropping the pagecache has a big performance impact, and it
+	 * doesn't fully solve the race condition anyway.  So for those reasons,
+	 * and also because this race condition isn't very important relatively
+	 * speaking (especially for small-ish files, where the chance of a page
+	 * being used, evicted, *and* re-instantiated all while enabling verity
+	 * is quite small), we no longer drop the inode's pagecache.
 	 */
-	filemap_write_and_wait(inode->i_mapping);
-	invalidate_inode_pages2(inode->i_mapping);
 
 	/*
 	 * allow_write_access() is needed to pair with deny_write_access().
 	 * Regardless, the filesystem won't allow writing to verity files.
 	 */
-out_allow_write_access:
 	allow_write_access(filp);
 out_drop_write:
 	mnt_drop_write_file(filp);
